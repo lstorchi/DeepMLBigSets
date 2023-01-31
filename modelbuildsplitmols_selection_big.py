@@ -162,21 +162,3 @@ if __name__ == "__main__":
             history.history['val_accuracy'][i]))
    
     model.save(modelname)
-
-    fp = open("testset_"+modelname+".csv", "w")
-    test_predict = model.predict(X_test)
-    for i, name in enumerate(test_names):
-        print(name, " , ", test_predict[i], " , ", labels_test[i], file=fp)
-    fp.close()
-
-    fp = open("trainset_"+modelname+".csv", "w")
-    train_predict = model.predict(X_train)
-    for i, name in enumerate(train_names):
-        print(name, " , ", train_predict[i], " , ", labels_train[i], file=fp)
-    fp.close()
-
-    fp = open("validset_"+modelname+".csv", "w")
-    val_predict = model.predict(X_val)
-    for i, name in enumerate(val_names):
-        print(name, " , ", val_predict[i], " , ", labels_val[i], file=fp)
-    fp.close()
