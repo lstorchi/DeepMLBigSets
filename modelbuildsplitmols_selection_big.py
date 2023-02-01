@@ -69,7 +69,10 @@ if __name__ == "__main__":
     nbatch_size=64
     modelname = "model"
     npzsplit = "_c0_"
-    cntorm = ""
+    filteryouse = [64,64,64]
+    poolsizetouse = (2, 2, 2)
+    kernesizetouse = (3,3,3)
+    usethreecnn = True
 
     parser = argparse.ArgumentParser()
 
@@ -93,6 +96,18 @@ if __name__ == "__main__":
         type=int, required=False, default=nbatch_size)
     parser.add_argument("--nepochs", help="Specify the number of epochs, default: " + str(nepochs)  , \
         type=int, required=False, default=nepochs)
+    parser.add_argument("--filters", \
+        help="Specify filters to use as as list-like string dim 2 or 3 depends on usethreelayets, default: " + \
+        str(filteryouse), type=str, required=False, default=str(filteryouse))
+    parser.add_argument("--poolsize", \
+        help="Specify Pool Size filters as tuple-like string, default: " + str(poolsizetouse)  , \
+        type=str, required=False, default=str(poolsizetouse))
+    parser.add_argument("--kernelsize", \
+        help="Specify Kernel Size filters as tuple-like string, default: " + str(kernesizetouse)  , \
+        type=str, required=False, default=str(kernesizetouse))
+    parser.add_argument("--nocnnlayers3", help="Use 3 CNN layers", \
+        action='store_true', default=False)
+
     parser.add_argument("--modelname", help="Specify modelname, default: " + modelname  , \
         type=str, required=False, default=modelname)
     parser.add_argument("--channels", help="Specify channels to be used, default: " + str(cn)  , \
@@ -110,18 +125,32 @@ if __name__ == "__main__":
     nepochs = args.nepochs
     nbatch_size = args.nbatchsize
     modelname = args.modelname
+    filteryouse = eval(args.filters)
+    poolsizetouse = eval(args.poolsize)
+    kernesizetouse = eval(args.kernelsize)
+    usethreecnn = not(args.nocnnlayers3)
 
     cnformodel = cn
 
     batch_size = 500
+    train_samples = 0
+    val_samples = 0
 
     X_train_filenames = np.load(args.trainfilenames)
     X_val_filenames = np.load(args.validfilenames)
     y_train = np.load(args.trainlabels)
     y_val = np.load(args.validlabels)
 
+    train_samples = X_train_filenames.shape[0]
+    val_samples = X_val_filenames.shape[0]
+
+    print("Training Samplse: ", train_samples)
+    print("Validation Samples: ", val_samples)
+
     # read firts fopr dimension
-    dimx = dimy = dimz = 0
+    dimx = 0
+    dimy = 0
+    dimz = 0
     name = X_train_filenames[0]
     treedobject, dimx, dimy, dimz = commonutils.readfeature("", name, cn)
     print("Reading first element dimensions: ", dimx, dimy, dimz)
@@ -132,9 +161,9 @@ if __name__ == "__main__":
     sample_shape = (dimx, dimy, dimz, cnformodel)
 
     print("Sample shape: ", sample_shape)
-   
+
     model = models.model_scirep_selection_hyperopt(sample_shape, indense_layers, inunits, \
-        [32,32,32], (3,3,3), (2, 2, 2), True)
+       filteryouse , kernesizetouse, poolsizetouse, usethreecnn)
 
     K.set_value(model.optimizer.learning_rate, 0.0001)
     print("Learning rate before second fit:", model.optimizer.learning_rate.numpy())
@@ -142,11 +171,11 @@ if __name__ == "__main__":
     model.summary()
 
     history = model.fit(training_batch_generator,
-                   steps_per_epoch = int(3800 // batch_size),
+                   steps_per_epoch = int(train_samples // batch_size), # instead of ceil
                    epochs = 10,
                    verbose = 1,
                    validation_data = validation_batch_generator,
-                   validation_steps = int(950 // batch_size))
+                   validation_steps = int(val_samples // batch_size))
 
 
     print("")
