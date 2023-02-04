@@ -41,7 +41,6 @@ def readlabel(path, files, label="BBB", filtertu=True):
 
 ######################################################################################
 
-
 def readfeature(path, files, cn):
 
     data = np.load(path+files)

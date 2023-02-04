@@ -68,10 +68,15 @@ def model_scirep_selection_hyperopt(iinput_shape, ndense_layers, nunits, lnfilte
         model.add(LeakyReLU()) # qui serve perche; abbiamo una funzione di attivazione lineare 
         model.add(Dropout(0.2, input_shape=(nunits,)))
     
-    model.add(Dense(2, activation="sigmoid")) # activation="sigmoid" for classification
-    model.compile(optimizer=tf.keras.optimizers.Adam(), loss='categorical_crossentropy',\
-         metrics=['accuracy'])
-    
+    #model.add(Dense(2, activation="sigmoid")) # activation="sigmoid" for classification
+    #model.compile(optimizer=tf.keras.optimizers.Adam(), loss='categorical_crossentropy',\
+    #     metrics=['accuracy'])
+    # https://stackoverflow.com/questions/59216024/using-categorical-crossentropy-for-only-two-classes
+
+    model.add(Dense(1, activation="sigmoid")) # activation="sigmoid" for classification
+    model.compile(optimizer=tf.keras.optimizers.Adam(), loss='binary_crossentropy',\
+         metrics=['accuracy']) 
+
     return model
 
 ######################################################################################

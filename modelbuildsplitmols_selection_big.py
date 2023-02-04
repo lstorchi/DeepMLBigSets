@@ -28,6 +28,8 @@ import models
 #import visualkeras
 #from PIL import ImageFont
 
+_GLOBALCN = 8
+
 #####################################################################################
 
 class readergenerator(tf.keras.utils.Sequence):
@@ -37,9 +39,12 @@ class readergenerator(tf.keras.utils.Sequence):
     self.labels = labels
     self.batch_size = batch_size
 
-    self.dimx = 0
-    self.dimy = 0
-    self.dimz = 0
+    self.dimx = set()
+    self.dimy = set()
+    self.dimz = set()
+
+  def get_dims (self):
+    return self.dimx,  self.dimy, self.dimz 
     
   def __len__(self) :
     return (np.ceil(len(self.filenames) / float(self.batch_size))).astype(int)
@@ -48,11 +53,14 @@ class readergenerator(tf.keras.utils.Sequence):
     batch_x = self.filenames[idx * self.batch_size : (idx+1) * self.batch_size]
     batch_y = self.labels[idx * self.batch_size : (idx+1) * self.batch_size]
 
-    cn = 8
+    cn = _GLOBALCN
     X = []    
     for file_name in batch_x:
-        treedobject, self.dimx, self.dimy, self.dimz = \
+        treedobject, dx, dy, dz = \
             commonutils.readfeature("", file_name, cn)
+        self.dimx.add (dx)
+        self.dimy.add (dy)
+        self.dimz.add (dz)
         X.append(treedobject)
         #print(file_name)
 
@@ -78,11 +86,11 @@ if __name__ == "__main__":
 
     parser.add_argument("--trainfilenames", help="Specify the input training filenames ", 
         type=str, required=True)
-    parser.add_argument("--trainlabels", help="Read train labels file", \
+    parser.add_argument("--trainlabels", help="Read training labels file", \
         type=str, required=True)
-    parser.add_argument("--validfilenames", help="Specify the input training filenames ", 
+    parser.add_argument("--validfilenames", help="Specify the input validation filenames ", 
         type=str, required=True)
-    parser.add_argument("--validlabels", help="Read train labels file", \
+    parser.add_argument("--validlabels", help="Read validation labels file", \
         type=str, required=True)
 
     parser.add_argument("--nunits", \
@@ -112,8 +120,6 @@ if __name__ == "__main__":
         type=str, required=False, default=modelname)
     parser.add_argument("--channels", help="Specify channels to be used, default: " + str(cn)  , \
         type=int, required=False, default=cn)
-    parser.add_argument("--dumppredictions", help="Dump predicted data in CSV files", \
-        action='store_true', default=False)
 
     args = parser.parse_args()
 
@@ -131,6 +137,7 @@ if __name__ == "__main__":
     usethreecnn = not(args.nocnnlayers3)
 
     cnformodel = cn
+    _GLOBALCN  = cn
 
     batch_size = 500
     train_samples = 0
@@ -144,8 +151,8 @@ if __name__ == "__main__":
     train_samples = X_train_filenames.shape[0]
     val_samples = X_val_filenames.shape[0]
 
-    print("Training Samplse: ", train_samples)
-    print("Validation Samples: ", val_samples)
+    print("Training Samplse: ", train_samples, flush=True)
+    print("Validation Samples: ", val_samples, flush=True)
 
     # read firts fopr dimension
     dimx = 0
@@ -153,41 +160,57 @@ if __name__ == "__main__":
     dimz = 0
     name = X_train_filenames[0]
     treedobject, dimx, dimy, dimz = commonutils.readfeature("", name, cn)
-    print("Reading first element dimensions: ", dimx, dimy, dimz)
+    print("Reading first element dimensions: ", dimx, dimy, dimz, flush=True)
  
     training_batch_generator = readergenerator(X_train_filenames, y_train, batch_size)
     validation_batch_generator = readergenerator(X_val_filenames, y_val, batch_size)
 
     sample_shape = (dimx, dimy, dimz, cnformodel)
 
-    print("Sample shape: ", sample_shape)
+    print("Sample shape: ", sample_shape, flush=True)
 
     model = models.model_scirep_selection_hyperopt(sample_shape, indense_layers, inunits, \
        filteryouse , kernesizetouse, poolsizetouse, usethreecnn)
 
     K.set_value(model.optimizer.learning_rate, 0.0001)
-    print("Learning rate before second fit:", model.optimizer.learning_rate.numpy())
+    print("Learning rate before second fit:", model.optimizer.learning_rate.numpy(), flush=True)
     
     model.summary()
 
     history = model.fit(training_batch_generator,
                    steps_per_epoch = int(train_samples // batch_size), # instead of ceil
-                   epochs = 10,
+                   epochs = nepochs,
                    verbose = 1,
                    validation_data = validation_batch_generator,
                    validation_steps = int(val_samples // batch_size))
 
 
-    print("")
-    print ("Epoch Loss ValLoss")
-    for i in range(len(history.history['loss'])):
-        print ("%3d %12.8f %12.8f"%(i+1, history.history['loss'][i], 
-            history.history['val_loss'][i]))
+    dx, dy, dz = training_batch_generator.get_dims()
+    if (len(dx) != 1) or (len(dy) != 1) or (len(dz) != 1):
+        print("Dimensions error in training_batch_generator 1")
+        exit(1)
+    if not((dimx in dx) and (dimy in dy) and (dimz in dz)):
+        print("Dimensions error in training_batch_generator 2")
+        exit(1)
+
+    dx, dy, dz = validation_batch_generator.get_dims()
+    if (len(dx) != 1) or (len(dy) != 1) or (len(dz) != 1):
+        print("Dimensions error in validation_batch_generator 1")
+        exit(1)
+    if not((dimx in dx) and (dimy in dy) and (dimz in dz)):
+        print("Dimensions error in validation_batch_generator 2")
+        exit(1)
 
     print("")
-    print ("Epoch Accuracy")
+    print ("Epoch Loss ValLoss", flush=True)
+    for i in range(len(history.history['loss'])):
+        print ("%3d %12.8f %12.8f"%(i+1, history.history['loss'][i], 
+            history.history['val_loss'][i]), flush=True)
+
+    print("")
+    print ("Epoch Accuracy", flush=True)
     for i in range(len(history.history['accuracy'])):
         print ("%3d %12.8f %12.8f"%(i+1, history.history['accuracy'][i], 
-            history.history['val_accuracy'][i]))
+            history.history['val_accuracy'][i]), flush=True)
    
     model.save(modelname)

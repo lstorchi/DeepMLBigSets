@@ -133,9 +133,13 @@ if __name__ == "__main__":
 
     print("Done...", flush=True)
 
-    labels_train = to_categorical(yl_train)
-    labels_val = to_categorical(yl_val)
-    labels_test = to_categorical(yl_test)
+    #labels_train = to_categorical(yl_train)
+    #labels_val = to_categorical(yl_val)
+    #labels_test = to_categorical(yl_test)
+
+    labels_train = np.array(yl_train)
+    labels_val = np.array(yl_val)
+    labels_test = np.array(yl_test)
 
     print("Training: ", len(train_names), labels_train.shape)
     np.save("training_filenames.npy", train_names)
@@ -147,4 +151,4 @@ if __name__ == "__main__":
 
     print("Test: ", len(test_names), labels_test.shape)
     np.save("test_filenames.npy", test_names)
-    np.save("test_label.npy", labels_test)
+    np.save("test_labels.npy", labels_test)

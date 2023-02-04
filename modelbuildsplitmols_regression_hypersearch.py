@@ -80,7 +80,7 @@ def  extract_predicions_mixedback (labels, predictions):
 
 #####################################################################################3
 
-def extract_predicions (mol_to_idxvp, labels, predictions, idxvp_to_molname):
+def extract_predicions (mol_to_idxvp, labels, predictions):
 
     moltodiff = {}
 
@@ -95,17 +95,7 @@ def extract_predicions (mol_to_idxvp, labels, predictions, idxvp_to_molname):
         #print(mol) 
         vals = []
         checkvals = set()
-        vpsvals = {}
         for i in mol_to_idxvp[mol]:
-            molname = idxvp_to_molname[i]
-            basename = re.split("_c\d+_", molname)[0]
-            vpval = re.split("_c\d+_", molname)[1]
-            vpname = re.split("\d+$", basename+"_"+vpval)[0]
-
-            if not vpname in vpsvals:
-                vpsvals[vpname] = []
-            
-            vpsvals[vpname].append(predictions[i])
             checkvals.add(labels[i])
             vals.append(predictions[i])
 
@@ -124,15 +114,8 @@ def extract_predicions (mol_to_idxvp, labels, predictions, idxvp_to_molname):
 
         moltodiff[mol] = math.fabs(cval - realval)
 
-        l_avg_mse = 0.0
-        l_n = 0.0
-        for c in vpsvals:
-            l_avg_mse += math.pow( (np.mean(vpsvals[c]) - realval), 2.0)
-            l_n += 1.0
-        maval = l_avg_mse/l_n
         aval = np.mean(vals)
-
-        avg_mse += maval
+        avg_mse += math.pow(aval - realval, 2.0)
         avg_pediction.append(aval)
 
         std_pediction.append(np.std(vals))
@@ -442,19 +425,16 @@ if __name__ == "__main__":
     yl_train = []
     Xl_train = []
     train_mol_to_idxvp = {}
-    train_idxvp_to_molname = {}
     train_molnames = []
 
     yl_val = []
     Xl_val = []
     val_mol_to_idxvp = {}
-    val_idxvp_to_molname = {}
     val_molnames = []
 
     yl_test = []
     Xl_test = []
     test_mol_to_idxvp = {}
-    test_idxvp_to_molname = {}
     test_molnames = []
     
     glob_dimx = 0
@@ -536,7 +516,6 @@ if __name__ == "__main__":
                             if not basename in train_mol_to_idxvp:
                                 train_mol_to_idxvp[basename] = []
                             train_mol_to_idxvp[basename].append(len(yl_train)-1)
-                            train_idxvp_to_molname[len(yl_train)-1] = name
                             #print ("    In Training")
                         elif basename in val_labels:
                             yl_val.append(labels[basename])
@@ -546,7 +525,6 @@ if __name__ == "__main__":
                             if not basename in val_mol_to_idxvp:
                                 val_mol_to_idxvp[basename] = []
                             val_mol_to_idxvp[basename].append(len(yl_val)-1)
-                            val_idxvp_to_molname[len(yl_val)-1] = name
                             #print ("    In Validation")
                         elif basename in test_labels:
                             yl_test.append(labels[basename])
@@ -556,7 +534,6 @@ if __name__ == "__main__":
                             if not basename in test_mol_to_idxvp:
                                 test_mol_to_idxvp[basename] = []
                             test_mol_to_idxvp[basename].append(len(yl_test)-1)
-                            test_idxvp_to_molname[len(yl_test)-1] = name
                             #print ("    In Test")
                         else:
                             print("Reading: ", name," and match ", basename)
@@ -600,7 +577,6 @@ if __name__ == "__main__":
         #    print(train_molnames[i], y_train[i])
 
         train_mol_to_idxvp.clear()
-        train_idxvp_to_molname.clear()
 
         counter = 0
 
@@ -617,14 +593,12 @@ if __name__ == "__main__":
             if not basename in train_mol_to_idxvp:
                 train_mol_to_idxvp[basename] = []
             train_mol_to_idxvp[basename].append(i)
-            train_idxvp_to_molname[i] = name
             #print(molname, basename, confname)
 
         #for n in train_mol_to_idxvp:
         #    print(n , " ==> ",train_mol_to_idxvp[n])
 
         val_mol_to_idxvp.clear()
-        val_idxvp_to_molname.clear()
 
         for i, name in enumerate(val_molnames):
             counter += 1
@@ -636,7 +610,6 @@ if __name__ == "__main__":
             if not basename in val_mol_to_idxvp:
                 val_mol_to_idxvp[basename] = []
             val_mol_to_idxvp[basename].append(i)
-            val_idxvp_to_molname[i] = name
             #print(molname, basename, confname)
 
         for name in test_molnames:
@@ -658,18 +631,6 @@ if __name__ == "__main__":
     print("Test:  ", X_test.shape, y_test.shape)
     print("        ", len(test_molnames), len(test_mol_to_idxvp))
 
-    #for i in test_idxvp_to_molname:
-    #    print(i, test_idxvp_to_molname[i])
-
-    #for b in test_mol_to_idxvp:
-    #     print(b, test_mol_to_idxvp[b])
-
-    #for i in val_idxvp_to_molname:
-    #    print(i, val_idxvp_to_molname[i])
-
-    #for b in val_mol_to_idxvp:
-    #   print(b, val_mol_to_idxvp[b])
-
     labels_train = y_train
     labels_val = y_val
     labels_test = y_test
@@ -682,265 +643,293 @@ if __name__ == "__main__":
     sample_shape = (glob_dimx, glob_dimy, glob_dimz, cnformodel)
 
     print("Sample shape: ", sample_shape)
-   
-    #model = models.model_scirep_regression(sample_shape, \
-    #    indense_layers, inunits, infilters)
 
-    model = models.model_scirep_regression_hyperopt(sample_shape, \
-        indense_layers, inunits, [32,32,32], (3,3,3), (2, 2, 2), True)
+    initialmodelname = modelname
 
     #font = ImageFont.truetype("arial.ttf", 12)
     #visualkeras.layered_view(model, legend=True, font=font, draw_volume=False) 
 
     # lower learning rate the mse is stucked
-    K.set_value(model.optimizer.learning_rate, 0.0001)
-    print("Learning rate before second fit:", model.optimizer.learning_rate.numpy())
-    
-    model.summary()
-    history = model.fit(X_train, labels_train,
-                        batch_size=nbatch_size,
-                        epochs=nepochs,
-                        verbose=1,
-                        validation_data=(X_val, labels_val))
-    
-    print("")
-    print ("Epoch Loss ValLoss")
-    for i in range(len(history.history['loss'])):
-        print ("%3d %12.8f %12.8f"%(i+1, history.history['loss'][i], 
-            history.history['val_loss'][i]))
+    counter = 1 
+    full_infilters = [[8,8,8], [16,16,16], [32,32,32], [64,64,64] , [64,32,16], [16,32,64]]
+    full_threeconv = [True]
+    full_psize = [(2, 2, 2)]
+    full_ksize = [(3,3,3), (5,5,5)] 
+    full_indense_layers = [3, 4, 5]
+    full_inunits = [4, 8, 16, 24, 32]
+    for linfilters in full_infilters:
+        for threeconv in full_threeconv:
+            for psize in full_psize:
+                for ksize in full_ksize:
+                    for indense_layers  in full_indense_layers:
+                        for inunits in full_inunits:
 
-    print("")
-    print ("Epoch MSE ValMSE")
-    for i in range(len(history.history['mse'])):
-        print ("%3d %12.8f %12.8f"%(i+1, history.history['mse'][i], 
-            history.history['val_mse'][i]))
+                            filterstring = ""
+                            for f in linfilters:
+                                filterstring += str(f) 
+                            modelname = str(counter) + \
+                                "_dense_" + str(indense_layers) + \
+                                "_units_" + str(inunits) + \
+                                "_filters_" + filterstring + "_" + initialmodelname
 
-    plt.title('Keras model loss MAE')
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['training', 'validation'], loc='upper right')
-    #plt.show()
-    plt.savefig(modelname+'_loss.png')
-
-    plt.clf()
-    plt.title('Keras model MSE')
-    plt.ylabel('mse')
-    plt.xlabel('epoch')
-    plt.plot(history.history['mse'])
-    plt.plot(history.history['val_mse'])
-    plt.legend(['training', 'validation'], loc='upper right')
-    #plt.show()
-    plt.savefig(modelname + '_mse.png')
-
-    if not nulltestset: 
-
-        score, tmse, tmae = model.evaluate(X_test, labels_test,
-                            batch_size=nbatch_size)
-        print('Test score:', score)
-        print('Test mse:', tmse)
-        print('Test mae:', tmae)
-
-        test_predictions = model.predict(X_test)
-
-        if args.dumppredictions:
-            fp = open(modelname+"_testset_precictions.csv", "w")
-
-            fp.write("Molname , Predicted , Truevalue\n")
-            for i, pv in enumerate(test_predictions):
-                name = test_molnames[i]
-                fp.write("%s ; %10.5f ; %10.5f\n"%(name, pv, labels_test[i]))
-
-            fp.close()
-
-        msetest = 0.0
-        for i in range(len(test_predictions)):
-            msetest = msetest +  math.pow(test_predictions[i] - labels_test[i], 2.0)
-        msetest = msetest / float(len(test_predictions))
-        print ("Computed MSE test: %10.6f"%msetest)
-
-        #for i in  range(predictions.shape[0]):
-        #    print(labels_test[i], " vs ", predictions[i])
-
-        best_test_predictions, avg_test_predictions, std_test_predictions, test_singlevals , \
-            best_mse, avg_mse, moltodiff = \
-            extract_predicions (test_mol_to_idxvp, labels_test, test_predictions, \
-                test_idxvp_to_molname)
-
-        plt.clf()
-        plt.title("scatterplot for the testset")
-        plt.xlabel('True value')
-        plt.ylabel('Predicted value')
-        plt.xlim([-2.50, 2.50])
-        plt.ylim([-2.50, 2.50])
-        plt.scatter(labels_test, test_predictions)
-        plt.savefig(modelname + '_scattertest.png')
-
-        plt.clf()
-        plt.title("scatterplot for the testset bestvalue")
-        plt.xlabel('True value')
-        plt.ylabel('Predicted value')
-        plt.xlim([-2.50, 2.50])
-        plt.ylim([-2.50, 2.50]) 
-        plt.scatter(test_singlevals, best_test_predictions)
-        plt.savefig(modelname + '_scattertest_best.png')
-       
-        plt.clf()
-        plt.title("scatterplot for the testset avgvalue")
-        plt.xlabel('True value')
-        plt.ylabel('Predicted value')
-        plt.xlim([-2.50, 2.50])
-        plt.ylim([-2.50, 2.50]) 
-        plt.scatter(test_singlevals, avg_test_predictions)
-        plt.errorbar(test_singlevals, avg_test_predictions, yerr=std_test_predictions, fmt="o")
-        plt.savefig(modelname + '_scattertest_avg.png')
-
-        print("Test set, Best MSE: ", best_mse, " Avg MSE: ", avg_mse )
-
-        sdiff = dict(sorted(moltodiff.items(), key=lambda item: item[1]))
-        for mol in sdiff:
-            print(mol, " ABS diff: ", sdiff[mol])
-
-
-    train_predictions = model.predict(X_train)
-
-    if args.dumppredictions:
-        fp = open(modelname+"_trainingset_precictions.csv", "w")
-
-        fp.write("Molname ; Predicted ; Truevalue\n")
-        for i, pv in enumerate(train_predictions):
-            name = train_molnames[i]
-            fp.write("%s ; %10.5f ; %10.5f\n"%(name, pv, labels_train[i]))
-
-        fp.close()
-
-    msetrain = 0.0
-    for i in range(len(train_predictions)):
-        msetrain = msetrain +  math.pow(train_predictions[i] - labels_train[i], 2.0)
-    msetrain = msetrain / float(len(train_predictions))
-    print ("Computed MSE train: %10.6f"%msetrain)
-
-    plt.clf()
-    plt.title("scatterplot for the trainingset")
-    plt.xlabel('True value')
-    plt.ylabel('Predicted value')
-    plt.xlim([-2.50, 2.50])
-    plt.ylim([-2.50, 2.50]) 
-    plt.scatter(labels_train, train_predictions)
-    plt.savefig(modelname + '_scattertrain.png')
-
-    best_train_predictions = None 
-    avg_train_predictions = None 
-    std_train_predictions = None 
-    train_singlevals = None 
-    best_mse = None 
-    avg_mse = None
-
-    if not mixuptrainanadvalback:
-        best_train_predictions, avg_train_predictions, std_train_predictions, train_singlevals, \
-            best_mse, avg_mse, moltodiff = \
-            extract_predicions (train_mol_to_idxvp, labels_train, train_predictions, \
-                train_idxvp_to_molname)
-    else:
-        best_train_predictions, avg_train_predictions, std_train_predictions, train_singlevals, \
-            best_mse, avg_mse = \
-            extract_predicions_mixedback (labels_train, train_predictions)
-       
-    plt.clf()
-    plt.title("scatterplot for the trainingset bestvalue")
-    plt.xlabel('True value')
-    plt.ylabel('Predicted value')
-    plt.xlim([-2.50, 2.50])
-    plt.ylim([-2.50, 2.50])  
-    plt.scatter(train_singlevals, best_train_predictions)
-    plt.savefig(modelname + '_scattertrain_best.png')
-    
-    plt.clf()
-    plt.title("scatterplot for the trainingset avgvalue")
-    plt.xlabel('True value')
-    plt.ylabel('Predicted value')
-    plt.xlim([-2.50, 2.50])
-    plt.ylim([-2.50, 2.50])   
-    plt.scatter(train_singlevals, avg_train_predictions)
-    plt.errorbar(train_singlevals, avg_train_predictions, yerr=std_train_predictions, fmt="o")
-    plt.savefig(modelname + '_scattertrain_avg.png')
-    
-    print("Training set, Best MSE: ", best_mse, " Avg MSE: ", avg_mse )
-
-    val_predictions = model.predict(X_val)
-
-    if args.dumppredictions:
-        fp = open(modelname+"_validationset_precictions.csv", "w")
-        
-        fp.write("Molname , Predicted , Truevalue\n")
-        for i, pv in enumerate(val_predictions):
-            name = val_molnames[i]
-            fp.write("%s ; %10.5f ; %10.5f\n"%(name, pv, labels_val[i]))
-
-        fp.close()
-
-    mseval = 0.0
-    for i in range(len(val_predictions)):
-        mseval = mseval +  math.pow(val_predictions[i] - labels_val[i], 2.0)
-    mseval = mseval / float(len(val_predictions))
-    print ("Computed MSE val: %10.6f"%mseval)
- 
-    plt.clf()
-    plt.title("scatterplot for the validationset")
-    plt.xlabel('True value')
-    plt.ylabel('Predicted value')
-    plt.xlim([-2.50, 2.50])
-    plt.ylim([-2.50, 2.50])  
-    plt.scatter(labels_val, val_predictions)
-    plt.savefig(modelname + '_scatterval.png')
-
-    best_val_predictions = None 
-    avg_val_predictions = None 
-    std_val_predictions = None 
-    val_singlevals = None
-
-    if not mixuptrainanadvalback: 
-        best_val_predictions, avg_val_predictions, std_val_predictions, val_singlevals, \
-            best_mse, avg_mse, moltodiff = \
-            extract_predicions (val_mol_to_idxvp, labels_val, val_predictions, \
-                val_idxvp_to_molname)
-    else:
-        best_val_predictions, avg_val_predictions, std_val_predictions, val_singlevals, \
-            best_mse, avg_mse = \
-            extract_predicions_mixedback (labels_val, val_predictions)
-       
-    plt.clf()
-    plt.title("scatterplot for the valset bestvalue")
-    plt.xlabel('True value')
-    plt.ylabel('Predicted value')
-    plt.xlim([-2.50, 2.50])
-    plt.ylim([-2.50, 2.50])   
-    plt.scatter(val_singlevals, best_val_predictions)
-    plt.savefig(modelname + '_scatterval_best.png')
-    
-    plt.clf()
-    plt.title("scatterplot for the valset avgvalue")
-    plt.xlabel('True value')
-    plt.ylabel('Predicted value')
-    plt.xlim([-2.50, 2.50])
-    plt.ylim([-2.50, 2.50])    
-    plt.scatter(val_singlevals, avg_val_predictions)
-    plt.errorbar(val_singlevals, avg_val_predictions, yerr=std_val_predictions, fmt="o")
-    plt.savefig(modelname + '_scatterval_avg.png')
-
-    print("Validation set, Best MSE: ", best_mse, " Avg MSE: ", avg_mse )
-
-    gen_all_plots( 'DeepGRID Model', 'Experimental', 'Predicted',
-                    labels_train, train_predictions, 
-                    train_singlevals, avg_train_predictions, std_train_predictions,
-                    train_singlevals, best_train_predictions,
-                    labels_test, test_predictions,
-                    test_singlevals, avg_test_predictions, std_test_predictions,
-                    test_singlevals, best_test_predictions,
-                    labels_val, val_predictions, 
-                    val_singlevals, avg_val_predictions, std_val_predictions,
-                    val_singlevals, best_val_predictions, 
-                    'DeepGRID_model.png')
-
-    model.save(modelname)
+                            model = models.model_scirep_regression_hyperopt (sample_shape, \
+                                indense_layers, inunits, linfilters, ksize, psize, threeconv)
+                  
+                            K.set_value(model.optimizer.learning_rate, 0.0001)
+                            print("Learning rate before second fit:", model.optimizer.learning_rate.numpy())
+                  
+                            model.summary()
+                            history = model.fit(X_train, labels_train,
+                                            batch_size=nbatch_size,
+                                            epochs=nepochs,
+                                            verbose=1,
+                                            validation_data=(X_val, labels_val))
+                  
+                            print("")
+                            print ("Epoch Loss ValLoss")
+                            for i in range(len(history.history['loss'])):
+                                print ("%3d %12.8f %12.8f"%(i+1, history.history['loss'][i], 
+                                    history.history['val_loss'][i]))
+                           
+                            print("")
+                            print ("Epoch MSE ValMSE")
+                            for i in range(len(history.history['mse'])):
+                                print ("%3d %12.8f %12.8f"%(i+1, history.history['mse'][i], 
+                                    history.history['val_mse'][i]))
+                  
+                            print("Start model ", counter)
+                            print("filter ", linfilters)
+                            print("threeconvr ", threeconv)
+                            print("PoolSize ", psize)
+                            print("KernelSize ", ksize)
+                            print("indense_layers ", indense_layers)
+                            print("inunits ", inunits)
+                           
+                            plt.title('Keras model loss MAE')
+                            plt.plot(history.history['loss'])
+                            plt.plot(history.history['val_loss'])
+                            plt.ylabel('loss')
+                            plt.xlabel('epoch')
+                            plt.legend(['training', 'validation'], loc='upper right')
+                            #plt.show()
+                            plt.savefig(modelname+'_loss.png')
+                           
+                            plt.clf()
+                            plt.title('Keras model MSE')
+                            plt.ylabel('mse')
+                            plt.xlabel('epoch')
+                            plt.plot(history.history['mse'])
+                            plt.plot(history.history['val_mse'])
+                            plt.legend(['training', 'validation'], loc='upper right')
+                            #plt.show()
+                            plt.savefig(modelname + '_mse.png')
+                           
+                            if not nulltestset: 
+                           
+                                score, tmse, tmae = model.evaluate(X_test, labels_test,
+                                          batch_size=nbatch_size)
+                                print('Test score:', score)
+                                print('Test mse:', tmse)
+                                print('Test mae:', tmae)
+                           
+                                test_predictions = model.predict(X_test)
+                           
+                                if args.dumppredictions:
+                                    fp = open(modelname+"_testset_precictions.csv", "w")
+                           
+                                    fp.write("Molname , Predicted , Truevalue\n")
+                                    for i, pv in enumerate(test_predictions):
+                                        name = test_molnames[i]
+                                        fp.write("%s ; %10.5f ; %10.5f\n"%(name, pv, labels_test[i]))
+                           
+                                    fp.close()
+                           
+                                msetest = 0.0
+                                for i in range(len(test_predictions)):
+                                    msetest = msetest +  math.pow(test_predictions[i] - labels_test[i], 2.0)
+                                msetest = msetest / float(len(test_predictions))
+                                print ("Computed MSE test: %10.6f"%msetest)
+                           
+                                #for i in  range(predictions.shape[0]):
+                                #    print(labels_test[i], " vs ", predictions[i])
+                           
+                                best_test_predictions, avg_test_predictions, std_test_predictions, test_singlevals , \
+                                    best_mse, avg_mse, moltodiff = \
+                                    extract_predicions (test_mol_to_idxvp, labels_test, test_predictions)
+                           
+                                plt.clf()
+                                plt.title("scatterplot for the testset")
+                                plt.xlabel('True value')
+                                plt.ylabel('Predicted value')
+                                plt.xlim([-2.50, 2.50])
+                                plt.ylim([-2.50, 2.50])
+                                plt.scatter(labels_test, test_predictions)
+                                plt.savefig(modelname + '_scattertest.png')
+                           
+                                plt.clf()
+                                plt.title("scatterplot for the testset bestvalue")
+                                plt.xlabel('True value')
+                                plt.ylabel('Predicted value')
+                                plt.xlim([-2.50, 2.50])
+                                plt.ylim([-2.50, 2.50]) 
+                                plt.scatter(test_singlevals, best_test_predictions)
+                                plt.savefig(modelname + '_scattertest_best.png')
+                               
+                                plt.clf()
+                                plt.title("scatterplot for the testset avgvalue")
+                                plt.xlabel('True value')
+                                plt.ylabel('Predicted value')
+                                plt.xlim([-2.50, 2.50])
+                                plt.ylim([-2.50, 2.50]) 
+                                plt.scatter(test_singlevals, avg_test_predictions)
+                                plt.errorbar(test_singlevals, avg_test_predictions, yerr=std_test_predictions, fmt="o")
+                                plt.savefig(modelname + '_scattertest_avg.png')
+                           
+                                print("Test set, Best MSE: ", best_mse, " Avg MSE: ", avg_mse )
+                           
+                                sdiff = dict(sorted(moltodiff.items(), key=lambda item: item[1]))
+                                for mol in sdiff:
+                                    print(mol, " ABS diff: ", sdiff[mol])
+                           
+                           
+                            train_predictions = model.predict(X_train)
+                           
+                            if args.dumppredictions:
+                                fp = open(modelname+"_trainingset_precictions.csv", "w")
+                           
+                                fp.write("Molname ; Predicted ; Truevalue\n")
+                                for i, pv in enumerate(train_predictions):
+                                    name = train_molnames[i]
+                                    fp.write("%s ; %10.5f ; %10.5f\n"%(name, pv, labels_train[i]))
+                           
+                                fp.close()
+                           
+                            msetrain = 0.0
+                            for i in range(len(train_predictions)):
+                                msetrain = msetrain +  math.pow(train_predictions[i] - labels_train[i], 2.0)
+                            msetrain = msetrain / float(len(train_predictions))
+                            print ("Computed MSE train: %10.6f"%msetrain)
+                           
+                            plt.clf()
+                            plt.title("scatterplot for the trainingset")
+                            plt.xlabel('True value')
+                            plt.ylabel('Predicted value')
+                            plt.xlim([-2.50, 2.50])
+                            plt.ylim([-2.50, 2.50]) 
+                            plt.scatter(labels_train, train_predictions)
+                            plt.savefig(modelname + '_scattertrain.png')
+                           
+                            best_train_predictions = None 
+                            avg_train_predictions = None 
+                            std_train_predictions = None 
+                            train_singlevals = None 
+                            best_mse = None 
+                            avg_mse = None
+                           
+                            if not mixuptrainanadvalback:
+                                best_train_predictions, avg_train_predictions, std_train_predictions, train_singlevals, \
+                                    best_mse, avg_mse, moltodiff = \
+                                    extract_predicions (train_mol_to_idxvp, labels_train, train_predictions)
+                            else:
+                                best_train_predictions, avg_train_predictions, std_train_predictions, train_singlevals, \
+                                    best_mse, avg_mse = \
+                                    extract_predicions_mixedback (labels_train, train_predictions)
+                               
+                            plt.clf()
+                            plt.title("scatterplot for the trainingset bestvalue")
+                            plt.xlabel('True value')
+                            plt.ylabel('Predicted value')
+                            plt.xlim([-2.50, 2.50])
+                            plt.ylim([-2.50, 2.50])  
+                            plt.scatter(train_singlevals, best_train_predictions)
+                            plt.savefig(modelname + '_scattertrain_best.png')
+                            
+                            plt.clf()
+                            plt.title("scatterplot for the trainingset avgvalue")
+                            plt.xlabel('True value')
+                            plt.ylabel('Predicted value')
+                            plt.xlim([-2.50, 2.50])
+                            plt.ylim([-2.50, 2.50])   
+                            plt.scatter(train_singlevals, avg_train_predictions)
+                            plt.errorbar(train_singlevals, avg_train_predictions, yerr=std_train_predictions, fmt="o")
+                            plt.savefig(modelname + '_scattertrain_avg.png')
+                            
+                            print("Training set, Best MSE: ", best_mse, " Avg MSE: ", avg_mse )
+                           
+                            val_predictions = model.predict(X_val)
+                           
+                            if args.dumppredictions:
+                                fp = open(modelname+"_validationset_precictions.csv", "w")
+                                
+                                fp.write("Molname , Predicted , Truevalue\n")
+                                for i, pv in enumerate(val_predictions):
+                                    name = val_molnames[i]
+                                    fp.write("%s ; %10.5f ; %10.5f\n"%(name, pv, labels_val[i]))
+                           
+                                fp.close()
+                           
+                            mseval = 0.0
+                            for i in range(len(val_predictions)):
+                                mseval = mseval +  math.pow(val_predictions[i] - labels_val[i], 2.0)
+                            mseval = mseval / float(len(val_predictions))
+                            print ("Computed MSE val: %10.6f"%mseval)
+                           
+                            plt.clf()
+                            plt.title("scatterplot for the validationset")
+                            plt.xlabel('True value')
+                            plt.ylabel('Predicted value')
+                            plt.xlim([-2.50, 2.50])
+                            plt.ylim([-2.50, 2.50])  
+                            plt.scatter(labels_val, val_predictions)
+                            plt.savefig(modelname + '_scatterval.png')
+                           
+                            best_val_predictions = None 
+                            avg_val_predictions = None 
+                            std_val_predictions = None 
+                            val_singlevals = None
+                           
+                            if not mixuptrainanadvalback: 
+                                best_val_predictions, avg_val_predictions, std_val_predictions, val_singlevals, \
+                                    best_mse, avg_mse, moltodiff = \
+                                    extract_predicions (val_mol_to_idxvp, labels_val, val_predictions)
+                            else:
+                                best_val_predictions, avg_val_predictions, std_val_predictions, val_singlevals, \
+                                    best_mse, avg_mse = \
+                                    extract_predicions_mixedback (labels_val, val_predictions)
+                               
+                            plt.clf()
+                            plt.title("scatterplot for the valset bestvalue")
+                            plt.xlabel('True value')
+                            plt.ylabel('Predicted value')
+                            plt.xlim([-2.50, 2.50])
+                            plt.ylim([-2.50, 2.50])   
+                            plt.scatter(val_singlevals, best_val_predictions)
+                            plt.savefig(modelname + '_scatterval_best.png')
+                            
+                            plt.clf()
+                            plt.title("scatterplot for the valset avgvalue")
+                            plt.xlabel('True value')
+                            plt.ylabel('Predicted value')
+                            plt.xlim([-2.50, 2.50])
+                            plt.ylim([-2.50, 2.50])    
+                            plt.scatter(val_singlevals, avg_val_predictions)
+                            plt.errorbar(val_singlevals, avg_val_predictions, yerr=std_val_predictions, fmt="o")
+                            plt.savefig(modelname + '_scatterval_avg.png')
+                           
+                            print("Validation set, Best MSE: ", best_mse, " Avg MSE: ", avg_mse )
+                           
+                            gen_all_plots( 'DeepGRID Model', 'Experimental', 'Predicted',
+                                            labels_train, train_predictions, 
+                                            train_singlevals, avg_train_predictions, std_train_predictions,
+                                            train_singlevals, best_train_predictions,
+                                            labels_test, test_predictions,
+                                            test_singlevals, avg_test_predictions, std_test_predictions,
+                                            test_singlevals, best_test_predictions,
+                                            labels_val, val_predictions, 
+                                            val_singlevals, avg_val_predictions, std_val_predictions,
+                                            val_singlevals, best_val_predictions, 
+                                            'DeepGRID_model.png')
+                           
+                            model.save(modelname)
+                  
+                            counter+= 1
