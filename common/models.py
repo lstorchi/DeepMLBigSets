@@ -25,7 +25,7 @@ from tensorflow.keras import backend as K
 ######################################################################################
 
 def model_scirep_selection_hyperopt(iinput_shape, ndense_layers, nunits, lnfilters,
-    ksize, psize, threeconv):
+    ksize, psize, threeconv, addbatch=False):
     """
     Architecture from
     https://doi.org/10.1038/s41598-017-17299-w
@@ -39,9 +39,9 @@ def model_scirep_selection_hyperopt(iinput_shape, ndense_layers, nunits, lnfilte
                          input_shape=iinput_shape,
                          kernel_regularizer=regularizers.l2(l=l2val), 
                          padding='same'))
-  
     model.add(LeakyReLU()) # schiaaiano i valori negativi forse nel nostro caso non ne vale la pena 
-    #model.add(BatchNormalization()) # anche qui normalizzazione, serve ?
+    if addbatch:
+        model.add(BatchNormalization()) # anche qui normalizzazione, serve ?
     model.add(Dropout(0.2))
     model.add(MaxPooling3D(pool_size=psize))
 
@@ -50,6 +50,8 @@ def model_scirep_selection_hyperopt(iinput_shape, ndense_layers, nunits, lnfilte
         model.add(Conv3D(lnfilters[1], kernel_size=ksize,
                      kernel_regularizer=regularizers.l2(l=l2val),
                      padding='same'))
+        if addbatch:
+            model.add(BatchNormalization())
         model.add(LeakyReLU())
         model.add(Dropout(0.2, input_shape=iinput_shape))
         model.add(MaxPooling3D(pool_size=psize))
@@ -57,6 +59,8 @@ def model_scirep_selection_hyperopt(iinput_shape, ndense_layers, nunits, lnfilte
     model.add(Conv3D(lnfilters[2], kernel_size=ksize,
                      kernel_regularizer=regularizers.l2(l=l2val),
                      padding='same'))
+    if addbatch:
+        model.add(BatchNormalization())
     model.add(LeakyReLU())
     model.add(Dropout(0.2))
 
@@ -65,6 +69,8 @@ def model_scirep_selection_hyperopt(iinput_shape, ndense_layers, nunits, lnfilte
     for i in range(ndense_layers):
         model.add(Dense(nunits, activation="sigmoid",
                 kernel_regularizer=regularizers.l2(l=l2val))) # activation="sigmoid" for classification
+        if addbatch:
+            model.add(BatchNormalization())
         model.add(LeakyReLU()) # qui serve perche; abbiamo una funzione di attivazione lineare 
         model.add(Dropout(0.2, input_shape=(nunits,)))
     

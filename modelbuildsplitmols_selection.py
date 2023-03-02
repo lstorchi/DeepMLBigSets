@@ -77,6 +77,8 @@ if __name__ == "__main__":
         type=str, required=False, default=str(kernesizetouse))
     parser.add_argument("--nocnnlayers3", help="Use 3 CNN layers", \
         action='store_true', default=False)
+    parser.add_argument("--addbatchnormalization", help="Use add BatchNormalization", \
+        action='store_true', default=False)
 
     parser.add_argument("--modelname", help="Specify modelname, default: " + modelname  , \
         type=str, required=False, default=modelname)
@@ -97,10 +99,10 @@ if __name__ == "__main__":
     poolsizetouse = eval(args.poolsize)
     kernesizetouse = eval(args.kernelsize)
     usethreecnn = not(args.nocnnlayers3)
+    addbtach = args.addbatchnormalization
 
     cnformodel = cn
 
-    batch_size = 500
     train_samples = 0
     val_samples = 0
 
@@ -157,9 +159,8 @@ if __name__ == "__main__":
     sample_shape = (dimx, dimy, dimz, cnformodel)
 
     print("Sample shape: ", sample_shape, flush=True)
-
     model = models.model_scirep_selection_hyperopt(sample_shape, indense_layers, inunits, \
-       filteryouse , kernesizetouse, poolsizetouse, usethreecnn)
+       filteryouse , kernesizetouse, poolsizetouse, usethreecnn, addbtach)
 
     K.set_value(model.optimizer.learning_rate, 0.0001)
     print("Learning rate before second fit:", model.optimizer.learning_rate.numpy(),\

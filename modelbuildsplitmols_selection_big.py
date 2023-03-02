@@ -34,10 +34,10 @@ _GLOBALCN = 8
 
 class readergenerator(tf.keras.utils.Sequence):
 
-  def __init__(self, filenames, labels, batch_size) :
+  def __init__(self, filenames, labels, swap_batch_size) :
     self.filenames = filenames
     self.labels = labels
-    self.batch_size = batch_size
+    self.swap_batch_size = swap_batch_size
 
     self.dimx = set()
     self.dimy = set()
@@ -47,11 +47,11 @@ class readergenerator(tf.keras.utils.Sequence):
     return self.dimx,  self.dimy, self.dimz 
     
   def __len__(self) :
-    return (np.ceil(len(self.filenames) / float(self.batch_size))).astype(int)
+    return (np.ceil(len(self.filenames) / float(self.swap_batch_size))).astype(int)
   
   def __getitem__(self, idx) :
-    batch_x = self.filenames[idx * self.batch_size : (idx+1) * self.batch_size]
-    batch_y = self.labels[idx * self.batch_size : (idx+1) * self.batch_size]
+    batch_x = self.filenames[idx * self.swap_batch_size : (idx+1) * self.swap_batch_size]
+    batch_y = self.labels[idx * self.swap_batch_size : (idx+1) * self.swap_batch_size]
 
     cn = _GLOBALCN
     X = []    
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     inunits = 64
     indense_layers = 4
     nepochs = 30
-    nbatch_size=64
+    nbatch_size= 64
     modelname = "model"
     npzsplit = "_c0_"
     filteryouse = [64,64,64]
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     parser.add_argument("--ndenselayers", help="Specify the number of inner dense layers, default: " + \
         str(indense_layers)  , \
         type=int, required=False, default=indense_layers)
-    parser.add_argument("--nbatchsize", help="Specify the batch size, default: " + str(nbatch_size)  , \
+    parser.add_argument("--nbatchsize", help="Specify the batch size, depends on GPU memory but also on model, default: " + str(nbatch_size)  , \
         type=int, required=False, default=nbatch_size)
     parser.add_argument("--nepochs", help="Specify the number of epochs, default: " + str(nepochs)  , \
         type=int, required=False, default=nepochs)
@@ -114,6 +114,8 @@ if __name__ == "__main__":
         help="Specify Kernel Size filters as tuple-like string, default: " + str(kernesizetouse)  , \
         type=str, required=False, default=str(kernesizetouse))
     parser.add_argument("--nocnnlayers3", help="Use 3 CNN layers", \
+        action='store_true', default=False)
+    parser.add_argument("--addbatchnormalization", help="Use add BatchNormalization", \
         action='store_true', default=False)
 
     parser.add_argument("--modelname", help="Specify modelname, default: " + modelname  , \
@@ -135,11 +137,12 @@ if __name__ == "__main__":
     poolsizetouse = eval(args.poolsize)
     kernesizetouse = eval(args.kernelsize)
     usethreecnn = not(args.nocnnlayers3)
+    addbtach = args.addbatchnormalization
 
     cnformodel = cn
     _GLOBALCN  = cn
 
-    batch_size = 500
+    swap_batch_size = nbatch_size
     train_samples = 0
     val_samples = 0
 
@@ -162,15 +165,14 @@ if __name__ == "__main__":
     treedobject, dimx, dimy, dimz = commonutils.readfeature("", name, cn)
     print("Reading first element dimensions: ", dimx, dimy, dimz, flush=True)
  
-    training_batch_generator = readergenerator(X_train_filenames, y_train, batch_size)
-    validation_batch_generator = readergenerator(X_val_filenames, y_val, batch_size)
+    training_batch_generator = readergenerator(X_train_filenames, y_train, swap_batch_size)
+    validation_batch_generator = readergenerator(X_val_filenames, y_val, swap_batch_size)
 
     sample_shape = (dimx, dimy, dimz, cnformodel)
 
     print("Sample shape: ", sample_shape, flush=True)
-
     model = models.model_scirep_selection_hyperopt(sample_shape, indense_layers, inunits, \
-       filteryouse , kernesizetouse, poolsizetouse, usethreecnn)
+       filteryouse , kernesizetouse, poolsizetouse, usethreecnn, addbtach)
 
     K.set_value(model.optimizer.learning_rate, 0.0001)
     print("Learning rate before second fit:", model.optimizer.learning_rate.numpy(), flush=True)
@@ -178,11 +180,11 @@ if __name__ == "__main__":
     model.summary()
 
     history = model.fit(training_batch_generator,
-                   steps_per_epoch = int(train_samples // batch_size), # instead of ceil
+                   steps_per_epoch = int(train_samples // swap_batch_size), # instead of ceil
                    epochs = nepochs,
                    verbose = 1,
                    validation_data = validation_batch_generator,
-                   validation_steps = int(val_samples // batch_size))
+                   validation_steps = int(val_samples // swap_batch_size))
 
 
     dx, dy, dz = training_batch_generator.get_dims()

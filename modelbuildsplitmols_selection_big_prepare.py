@@ -144,11 +144,19 @@ if __name__ == "__main__":
     print("Training: ", len(train_names), labels_train.shape)
     np.save("training_filenames.npy", train_names)
     np.save("training_labels.npy", labels_train)
-
+    print("Training count 0: ", np.count_nonzero(labels_train == 0))
+    print("Training count 1: ", np.count_nonzero(labels_train == 1))
+ 
     print("Validation: ", len(val_names), labels_val.shape)
     np.save("validation_filenames.npy", val_names)
     np.save("validation_labels.npy", labels_val)
+    print("Validation count 0: ", np.count_nonzero(labels_val == 0))
+    print("Validation count 1: ", np.count_nonzero(labels_val == 1))
 
     print("Test: ", len(test_names), labels_test.shape)
     np.save("test_filenames.npy", test_names)
     np.save("test_labels.npy", labels_test)
+    print("Test count 0: ", np.count_nonzero(labels_test == 0))
+    print("Test count 1: ", np.count_nonzero(labels_test == 1))
+
+
