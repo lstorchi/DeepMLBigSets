@@ -139,216 +139,6 @@ def plot_scatter_with_errors ( title, xlabel, ylabel, xdata, ydata, yerrors, poi
 
 #####################################################################################3
 
-def gen_3_plots ( title, xlabel, ylabel, pointfmt, barcolour, alph, rows, rowIdx,
-                    xdata_all, ydata_all,
-                    xdata_avg, ydata_avg, yerrors, 
-                    xdata_best, ydata_best,
-                    subtitle1, subtitle2, subtitle3, 
-                    imgfile):
-
-    with pyplot.style.context('ggplot'):
-        pyplot.clf()
-        pyplot.figure(figsize=(30, 10))
-
-        pyplot.rc('font', size=8)          # controls default text sizes
-        pyplot.rc('axes', titlesize=6)     # fontsize of the axes title
-        pyplot.rc('axes', labelsize=10)    # fontsize of the x and y labels
-        pyplot.rc('xtick', labelsize=6)    # fontsize of the tick labels
-        pyplot.rc('ytick', labelsize=6)    # fontsize of the tick labels
-        pyplot.rc('legend', fontsize=10)    # legend fontsize
-        pyplot.rc('figure', titlesize=12)  # fontsize of the figure title
-        pyplot.rc('errorbar', capsize=2)
-
-        pyplot.title(title, fontsize = 12)
-        pyplot.xlabel(xlabel)
-        pyplot.ylabel(ylabel)
-        pyplot.xlim([-2.50, 2.50])
-        pyplot.ylim([-1.50, 1.50]) 
-
-        ax = []
-
-        fig1 = pyplot.gcf()
-
-        ax1 = pyplot.subplot(rows,3,((rowIdx-1)*3)+1)
-        ax1.set_xlim([-2.50, 2.50])
-        ax1.set_ylim([-1.50, 1.50])
-        ax1.set_title(subtitle1, fontsize = 12)
-        #ax1.set_xlabel(xlabel)
-        ax1.set_ylabel(ylabel)
-
-        ax2 = pyplot.subplot(rows,3,((rowIdx-1)*3)+2,sharey=ax1)
-        ax2.set_xlim([-2.50, 2.50])
-        ax2.set_ylim([-1.50, 1.50])
-        ax2.set_title(subtitle2, fontsize = 12)
-        ax2.set_xlabel(xlabel)
-        #ax2.set_ylabel(ylabel)
-
-        ax3 = pyplot.subplot(rows,3,((rowIdx-1)*3)+3,sharey=ax1)
-        ax3.set_xlim([-2.50, 2.50])
-        ax3.set_ylim([-1.50, 1.50])
-        ax3.set_title(subtitle3, fontsize = 12)
-        #ax3.set_xlabel(xlabel)
-        #ax3.set_ylabel(ylabel)
- 
-        fig1.subplots_adjust(top=0.85)
-
-        fig1.suptitle(title, fontsize = 14)
-
-        # All data plot
-        ax1.plot(xdata_all, ydata_all, pointfmt, alpha=alph-0.1)
-
-        # Avg data plot
-        markers, bars, caps = ax2.errorbar(xdata_avg, ydata_avg, \
-            yerr=yerrors, fmt=pointfmt, ecolor=barcolour, alpha=alph)
-        [bar.set_alpha(alph) for bar in bars]
-        [cap.set_alpha(alph) for cap in caps]
-
-        # Best data plot
-        ax3.plot(xdata_best, ydata_best, pointfmt, alpha=alph)
-
-        fig1.set_size_inches(15, 4)
-        fig1.savefig(imgfile, bbox_inches="tight", dpi=600)
-
-        pyplot.clf()
-        pyplot.close()
-
-    return
-
-#####################################################################################3
-
-def gen_all_plots ( title, xlabel, ylabel, 
-                    train_xdata_all, train_ydata_all,
-                    train_xdata_avg, train_ydata_avg, train_yerrors, 
-                    train_xdata_best, train_ydata_best,
-                    test_xdata_all, test_ydata_all,
-                    test_xdata_avg, test_ydata_avg, test_yerrors, 
-                    test_xdata_best, test_ydata_best,
-                    val_xdata_all, val_ydata_all,
-                    val_xdata_avg, val_ydata_avg, val_yerrors, 
-                    val_xdata_best, val_ydata_best,
-                    imgfile):
-
-    with pyplot.style.context('ggplot'):
-        pyplot.clf()
-        pyplot.figure(figsize=(30, 60))
-
-        pyplot.rc('font', size=8)          # controls default text sizes
-        pyplot.rc('axes', titlesize=8)     # fontsize of the axes title
-        pyplot.rc('axes', labelsize=10)    # fontsize of the x and y labels
-        pyplot.rc('xtick', labelsize=8)    # fontsize of the tick labels
-        pyplot.rc('ytick', labelsize=8)    # fontsize of the tick labels
-        pyplot.rc('legend', fontsize=10)    # legend fontsize
-        pyplot.rc('figure', titlesize=12)  # fontsize of the figure title
-        pyplot.rc('errorbar', capsize=2)
-
-        pyplot.rcParams['figure.constrained_layout.use'] = True
-
-        pyplot.title(title, fontsize = 12)
-        pyplot.xlabel(xlabel)
-        pyplot.ylabel(ylabel)
-        pyplot.xlim([-2.50, 2.50])
-        pyplot.ylim([-1.50, 1.50]) 
-        
-        fig1 = pyplot.gcf()
-
-        ax1 = pyplot.subplot(3,3,1)
-        ax1.set_xlim([-2.50, 2.50])
-        ax1.set_ylim([-2.00, 2.00])
-        ax1.set_title('All', fontsize = 14)
-
-        ax2 = pyplot.subplot(3,3,2,sharey=ax1)
-        ax2.set_xlim([-2.50, 2.50])
-        ax2.set_ylim([-2.00, 2.00])
-        ax2.set_title('Average', fontsize = 14)
-
-        ax3 = pyplot.subplot(3,3,3,sharey=ax1)
-        ax3.set_xlim([-2.50, 2.50])
-        ax3.set_ylim([-2.00, 2.00])
-        ax3.set_title('Best', fontsize = 14)
-
-        ax4 = pyplot.subplot(3,3,4,)
-        ax4.set_xlim([-2.50, 2.50])
-        ax4.set_ylim([-2.00, 2.00])
-
-        ax5 = pyplot.subplot(3,3,5,sharey=ax4)
-        ax5.set_xlim([-2.50, 2.50])
-        ax5.set_ylim([-2.00, 2.00])
-
-        ax6 = pyplot.subplot(3,3,6,sharey=ax4)
-        ax6.set_xlim([-2.50, 2.50])
-        ax6.set_ylim([-2.00, 2.00])
-
-        ax7 = pyplot.subplot(3,3,7)
-        ax7.set_xlim([-2.50, 2.50])
-        ax7.set_ylim([-2.00, 2.00])
-
-        ax8 = pyplot.subplot(3,3,8,sharey=ax7)
-        ax8.set_xlim([-2.50, 2.50])
-        ax8.set_ylim([-2.00, 2.00])
-
-        ax9 = pyplot.subplot(3,3,9,sharey=ax7)
-        ax9.set_xlim([-2.50, 2.50])
-        ax9.set_ylim([-2.00, 2.00])
-
-        ax4.set_ylabel('Predicted', fontsize = 14)
-        ax8.set_xlabel('Experimental', fontsize = 14)
-
-        pointfmt, barcolour, alph, = 'b.', 'b', 0.4
-
-        # All data plot
-        ax1.plot(train_xdata_all, train_ydata_all, pointfmt, alpha=alph-0.1)
-
-        # Avg data plot
-        markers, bars, caps = ax2.errorbar(train_xdata_avg, train_ydata_avg, \
-            yerr=train_yerrors, fmt=pointfmt, ecolor=barcolour, alpha=alph)
-        [bar.set_alpha(alph) for bar in bars]
-        [cap.set_alpha(alph) for cap in caps]
-
-        # Best data plot
-        ax3.plot(train_xdata_best, train_ydata_best, pointfmt, alpha=alph)
-
-        pointfmt, barcolour, alph, = 'g.', 'g', 0.4
-
-        # All data plot
-        ax4.plot(val_xdata_all, val_ydata_all, pointfmt, alpha=alph-0.1)
-
-        # Avg data plot
-        markers, bars, caps = ax5.errorbar(val_xdata_avg, val_ydata_avg, \
-            yerr=val_yerrors, fmt=pointfmt, ecolor=barcolour, alpha=alph)
-        [bar.set_alpha(alph) for bar in bars]
-        [cap.set_alpha(alph) for cap in caps]
-
-        # Best data plot
-        ax6.plot(val_xdata_best, val_ydata_best, pointfmt, alpha=alph)
-
-        pointfmt, barcolour, alph, = 'r.', 'r', 0.4
-
-        # All data plot
-        ax7.plot(test_xdata_all, test_ydata_all, pointfmt, alpha=alph-0.1)
-
-        # Avg data plot
-        markers, bars, caps = ax8.errorbar(test_xdata_avg, test_ydata_avg, \
-            yerr=test_yerrors, fmt=pointfmt, ecolor=barcolour, alpha=alph)
-        [bar.set_alpha(alph) for bar in bars]
-        [cap.set_alpha(alph) for cap in caps]
-
-        # Best data plot
-        ax9.plot(test_xdata_best, test_ydata_best, pointfmt, alpha=alph)
-
-        fig1.subplots_adjust(top=0.93)
-
-        fig1.suptitle(title, fontsize = 16)
-        
-        fig1.set_size_inches(15, 12)
-        fig1.savefig(imgfile, bbox_inches="tight", dpi=600)
-
-        pyplot.clf()
-        pyplot.close()
-
-    return
-
-#####################################################################################3
-
 if __name__ == "__main__":
 
     QUICKTEST = False
@@ -757,11 +547,6 @@ if __name__ == "__main__":
     plot_scatter ( 'Training Set, All Predictions', 'Experimental', 'Predicted', \
         y_train, y_pred, 'b.', 0.3, "RF_train_scatter.png" )
     
-    gen_3_plots( 'RF Training Set', 'Experimental', 'Predicted', 'b.', 'b', 0.4, 1, 1, \
-                        y_train, y_pred, train_singlevals, avg_train_predictions, std_train_predictions,
-                        train_singlevals, best_train_predictions, 'All', 'Average', \
-                            'Best', 'RF_train.png')
-    
     print("RF Traininig      MSE: ", mse)
     print("RF Traininig Best MSE: ", best_mse)
     print("RF Traininig  Avg MSE: ", avg_mse)
@@ -793,10 +578,6 @@ if __name__ == "__main__":
     
     plot_scatter ( 'Test Set, All Predictions', 'Experimental', 'Predicted', \
         y_test, y_pred, 'r.', 0.3, "RF_test_scatter.png" )
-    
-    gen_3_plots( 'RF Test Set', 'Experimental', 'Predicted', 'r.', 'r', 0.4, 1, 1, \
-                        y_test, y_pred, test_singlevals, avg_test_predictions, std_test_predictions, \
-                        test_singlevals, best_test_predictions, 'All', 'Average', 'Best', 'RF_test.png')
     
     print("RF Test      MSE: ", mse)
     print("RF Test Best MSE: ", best_mse)
@@ -831,25 +612,6 @@ if __name__ == "__main__":
     
     plot_scatter ( 'Validation Set, All Predictions', 'Experimental', 'Predicted', y_valid,\
          y_pred, 'g.', 0.3, "RF_valid_scatter.png" )
-    
-    gen_3_plots( 'RF Validation Set', 'Experimental', 'Predicted', 'g.', 'g', 0.4, 1, 1,\
-                        y_valid, y_pred, \
-                        valid_singlevals, avg_valid_predictions, std_valid_predictions,\
-                        valid_singlevals, best_valid_predictions, 'All', 'Average', 'Best', \
-                            'RF_validation.png')
-    
-    gen_all_plots( 'RF Model', 'Experimental', 'Predicted', \
-                        y_train, y_pred_train, \
-                        train_singlevals, avg_train_predictions, std_train_predictions,\
-                        train_singlevals, best_train_predictions,\
-                        y_test, y_pred_test, \
-                        test_singlevals, avg_test_predictions, std_test_predictions,\
-                        test_singlevals, best_test_predictions,\
-                        y_valid, y_pred_valid, \
-                        valid_singlevals, avg_valid_predictions, std_valid_predictions,\
-                        valid_singlevals, best_valid_predictions, \
-                        'RF_model.png')
-    
     
     print("RF Validation      MSE: ", mse)
     print("RF Validation Best MSE: ", best_mse)
@@ -1065,16 +827,3 @@ if __name__ == "__main__":
     print("PLS Validation      MSE: ", mse)
     print("PLS Validation Best MSE: ", best_mse)
     print("PLS Validation  Avg MSE: ", avg_mse)
-    
-    gen_all_plots( 'PLS Model', 'Experimental', 'Predicted',
-                        y_train, y_pred_train, 
-                        train_singlevals, avg_train_predictions, std_train_predictions,
-                        train_singlevals, best_train_predictions,
-                        y_test, y_pred_test, 
-                        test_singlevals, avg_test_predictions, std_test_predictions,
-                        test_singlevals, best_test_predictions,
-                        y_valid, y_pred_valid, 
-                        valid_singlevals, avg_valid_predictions, std_valid_predictions,
-                        valid_singlevals, best_valid_predictions, 
-                        'PLS_model.png')
-    
